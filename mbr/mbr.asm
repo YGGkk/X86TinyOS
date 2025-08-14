@@ -3,7 +3,7 @@
 SECTION MBR vstart=0x7c00
     mov ax, cs
     mov ds, ax
-    mov ex, ax
+    mov es, ax
     mov ss, ax
     mov fs, ax
     mov sp, 0x7c00
@@ -50,17 +50,18 @@ rd_disk_m_16:
     mov al, cl
     out dx, al
 
+    mov eax, esi
 ; save the LBA addr to 0x1f3 ~ 0x1f6
     mov dx, 0x1f3
     out dx, al
 
     mov cl, 8
     shr eax, cl
-    mov dx, 0xf14
+    mov dx, 0x1f4
     out dx, al
 
     shr eax, cl
-    mov dx, 0xf15
+    mov dx, 0x1f5
     out dx, al
 
     shr eax, cl
@@ -70,14 +71,14 @@ rd_disk_m_16:
     out dx, al
 
 ; set the read mode: 0x20 to port 0x1f7
-    mov dx, 0xf17
+    mov dx, 0x1f7
     mov al, 0x20
     out dx, al
 
 ; check the status
   .not_ready:
     nop
-    int al, ax
+    in al, dx
     and al, 0x88
     cmp al, 0x08
     jnz .not_ready
