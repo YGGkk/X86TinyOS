@@ -35,7 +35,7 @@ SECTION MBR vstart=0x7c00
 ; set the hard disk attribute
     mov eax, LOADER_START_SECTOR  ; the addr for start sector
     mov bx, LOADER_BASE_ADDR      ; the addr of loader
-    mov cx, 1                     ; read 1 sector
+    mov cx, 4                     ; read 1 sector
     call rd_disk_m_16
 
     jmp LOADER_BASE_ADDR

@@ -1,29 +1,71 @@
 %include "boot.inc"
 SECTION loader vstart=LOADER_BASE_ADDR
+LODER_STACK_TOP equ LOADER_BASE_ADDR
 
-; print MBR
-; A 表示绿色背景闪烁,4 表示前景色为红色
-    mov byte [gs:0x00], '2' 
-    mov byte [gs:0x01], 0xA4 
+jmp loader_start
 
-    mov byte [gs:0x02], ' ' 
-    mov byte [gs:0x03], 0xA4 
+    GDT_BASE: dd 0x00000000
+              dd 0x00000000
+    CODE_DESC: dd 0x0000FFFF
+               dd DESC_CODE_HIGH4
+    DATA_STACK_DESC: dd 0x0000FFFF
+                     dd DESC_DATA_HIGH4
+    VIDEO_DESC: dd 0x80000007
+                dd DESC_VIDEO_HIGH4
+    
+    GDT_SIZE equ $ - GDT_BASE
+    GDT_LIMIT equ GDT_SIZE - 1
+    times 60 dq 0
 
-    mov byte [gs:0x04], 'L' 
-    mov byte [gs:0x05], 0xA4 
+    SELECTOR_CODE equ (0x0001 << 3) + TI_GDT + RPL0
+    SELECTOR_DATA equ (0X0002 << 3) + TI_GDT + RPL0
+    SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0
 
-    mov byte [gs:0x06], 'O' 
-    mov byte [gs:0x07], 0xA4 
+    gdt_ptr dw GDT_LIMIT
+            dd GDT_BASE
+    loadermsg db '2 loader in real.'
 
-    mov byte [gs:0x08], 'A' 
-    mov byte [gs:0x09], 0xA4
+loader_start:
+    mov sp, LOADER_BASE_ADDR
+    mov bp, loadermsg
+    mov cx, 17
+    mov ax, 0x1301
+    mov bx, 0x001f
+    mov dx, 0x1800
+    int 0x10
 
-    mov byte [gs:0x0a], 'D' 
-    mov byte [gs:0x0b], 0xA4
+; Ready for protect mode
+    ; Open A20
+    in ax, 0x92
+    or al, 0000 0010
+    out 0x92, al
 
-    mov byte [gs:0x0c], 'E' 
-    mov byte [gs:0x0d], 0xA4
+    ; Load GDT
+    lgdt [gdt_ptr]
 
-    mov byte [gs:0x0c], 'R' 
-    mov byte [gs:0x0d], 0xA4
+    ; Set cr0's zero bit as 1
+    mov eax, cr0
+    or eax, 0x00000001
+    mov cr0, eax
+
+    jmp dword SELECTOR_CODE:p_mode_start
+
+[bits 32]
+p_mode_start:
+    mov ax, SELECTOR_CODE
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov esp, LODER_STACK_TOP
+    mov ax, SELECTOR_VIDEO
+    mov gs, ax
+
+    mov byte [gs:100], 'P'
+    mov byte [gs:102], 'R'
+    mov byte [gs:104], 'O'
+    mov byte [gs:106], 'T'
+    mov byte [gs:108], 'E'
+    mov byte [gs:10a], 'C'
+    mov byte [gs:10b], 'T'
+
     jmp $
