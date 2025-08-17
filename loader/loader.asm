@@ -1,6 +1,6 @@
 %include "boot.inc"
 SECTION loader vstart=LOADER_BASE_ADDR
-LODER_STACK_TOP equ LOADER_BASE_ADDR
+LOADER_STACK_TOP equ LOADER_BASE_ADDR
 
 jmp loader_start
 
@@ -18,7 +18,7 @@ jmp loader_start
     times 60 dq 0
 
     SELECTOR_CODE equ (0x0001 << 3) + TI_GDT + RPL0
-    SELECTOR_DATA equ (0X0002 << 3) + TI_GDT + RPL0
+    SELECTOR_DATA equ (0x0002 << 3) + TI_GDT + RPL0
     SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0
 
     gdt_ptr dw GDT_LIMIT
@@ -36,8 +36,8 @@ loader_start:
 
 ; Ready for protect mode
     ; Open A20
-    in ax, 0x92
-    or al, 0000 0010
+    in al, 0x92
+    or al, 0b0010
     out 0x92, al
 
     ; Load GDT
@@ -52,20 +52,21 @@ loader_start:
 
 [bits 32]
 p_mode_start:
-    mov ax, SELECTOR_CODE
+    mov ax, SELECTOR_DATA
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov esp, LODER_STACK_TOP
+    mov esp, LOADER_STACK_TOP
     mov ax, SELECTOR_VIDEO
     mov gs, ax
 
-    mov byte [gs:100], 'P'
-    mov byte [gs:102], 'R'
-    mov byte [gs:104], 'O'
-    mov byte [gs:106], 'T'
-    mov byte [gs:108], 'E'
-    mov byte [gs:10a], 'C'
-    mov byte [gs:10b], 'T'
+    mov byte [gs:0xa0], 'P'
+    mov byte [gs:0xa1], 0x1F    ; 蓝底白字
+    mov byte [gs:0xa2], 'R'
+    ;mov byte [gs:164], 'O'
+    ;mov byte [gs:166], 'T'
+    ;mov byte [gs:168], 'E'
+    ;mov byte [gs:16a], 'C'
+    ;mov byte [gs:16b], 'T'
 
     jmp $
