@@ -2,42 +2,43 @@
 SECTION loader vstart=LOADER_BASE_ADDR
 LOADER_STACK_TOP equ LOADER_BASE_ADDR
 
-jmp loader_start
-
-    GDT_BASE: dd 0x00000000
-              dd 0x00000000
-    CODE_DESC: dd 0x0000FFFF
-               dd DESC_CODE_HIGH4
-    DATA_STACK_DESC: dd 0x0000FFFF
-                     dd DESC_DATA_HIGH4
-    VIDEO_DESC: dd 0x80000007
-                dd DESC_VIDEO_HIGH4
+GDT_BASE: dd 0x00000000
+          dd 0x00000000
+CODE_DESC: dd 0x0000FFFF
+           dd DESC_CODE_HIGH4
+DATA_STACK_DESC: dd 0x0000FFFF
+                 dd DESC_DATA_HIGH4
+VIDEO_DESC: dd 0x80000007
+            dd DESC_VIDEO_HIGH4
     
-    GDT_SIZE equ $ - GDT_BASE
-    GDT_LIMIT equ GDT_SIZE - 1
-    times 60 dq 0
+GDT_SIZE equ $ - GDT_BASE
+GDT_LIMIT equ GDT_SIZE - 1
+times 60 dq 0
 
-    total_mem_bytes dd 0
-    
-    SELECTOR_CODE equ (0x0001 << 3) + TI_GDT + RPL0
-    SELECTOR_DATA equ (0x0002 << 3) + TI_GDT + RPL0
-    SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0
+total_mem_bytes dd 0
 
-    gdt_ptr dw GDT_LIMIT
-            dd GDT_BASE
+SELECTOR_CODE equ (0x0001 << 3) + TI_GDT + RPL0
+SELECTOR_DATA equ (0x0002 << 3) + TI_GDT + RPL0
+SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0
+
+gdt_ptr dw GDT_LIMIT
+        dd GDT_BASE
     
-    ards_buf times 244 db 0
-    ards_nr dw 0
+ards_buf times 244 db 0
+ards_nr dw 0
 
 loader_start:
     xor ebx, ebx
     mov edx, 0x534d4150
     mov di, ards_buf
+
 .e820_mem_get_loop:
     mov eax, 0x000e820
     mov ecx, 20
     int 0x15
+    
     jc .e820_failed_so_try_e801
+    
     add di, cx
     inc word [ards_nr]
     cmp ebx, 0
@@ -49,7 +50,7 @@ loader_start:
 
 .find_max_mem_area:
     mov eax, [ebx]
-    add eax, [ebx+8]
+    add eax, [ebx + 8]
     add ebx, 20
     cmp edx, eax
     jge .next_ards
@@ -84,7 +85,7 @@ loader_start:
 .e801_failed_so_try88:
     mov ah, 0x88
     int 0x15
-    jc .error_hlt
+    jc .e8_fiailed
     and eax, 0x0000FFFF
 
     mul cx
@@ -92,9 +93,14 @@ loader_start:
     or edx, eax
     add edx, 0x100000
 
-.emem_get_ok:
+.mem_get_ok:
     mov [total_mem_bytes], edx
 
+.e8_fiailed:
+    mov byte [gs:0xa0], 'E'
+    mov byte [gs:0xa2], 'R'
+    mov byte [gs:0xa4], 'R'
+    jump $
 
 ; Ready for protect mode
     ; Open A20
@@ -209,8 +215,8 @@ rd_disk_m_32:
 ; loop 256 times
   .go_on_read:
     in ax, dx
-    mov [bx], ax
-    add bx, 2
+    mov [ds:ebx], ax
+    add ebx, 2
     loop .go_on_read
     ret
 

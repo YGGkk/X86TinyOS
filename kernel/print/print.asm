@@ -64,7 +64,7 @@ put_char:
     mov ax, bx
     mov si, 80
 
-    drive si
+    dive si
     sub bx, dx
 
 .is_carriage_return_end:
