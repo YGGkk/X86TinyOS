@@ -67,12 +67,14 @@ protect_mode_start:
 
     call rd_disk_m_32
     
-
     call setup_page
+
     sgdt [gdt_ptr]
-    mov ebx [gdt_ptr + 2]
+    
+    mov ebx, [gdt_ptr + 2]
     or dword [ebx + 0x18 + 4], 0xc0000000
     add dword [gdt_ptr + 2], 0xc0000000
+    
     add esp, 0xc0000000
 
     mov eax, PAGE_DIR_TABLE_POS
@@ -89,6 +91,8 @@ enter_kernel:
     call kernel_init
     mov esp, 0xc009f000
     jmp KERNEL_ENTRY_POINT
+
+    jmp $
 
 ; read write hard disk
 rd_disk_m_32:
@@ -217,7 +221,7 @@ kernel_init:
     call mem_cpy
     add esp, 12
 
-.PTNULL
+.PTNULL:
     add ebx, edx
     loop .each_segment
     ret
