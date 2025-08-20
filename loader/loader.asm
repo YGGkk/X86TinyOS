@@ -85,22 +85,21 @@ loader_start:
 .e801_failed_so_try88:
     mov ah, 0x88
     int 0x15
-    jc .e8_fiailed
+    jc .e8_failed
     and eax, 0x0000FFFF
 
     mul cx
     shl edx, 16
     or edx, eax
     add edx, 0x100000
-
-.mem_get_ok:
-    mov [total_mem_bytes], edx
-
-.e8_fiailed:
+.e8_failed:
     mov byte [gs:0xa0], 'E'
     mov byte [gs:0xa2], 'R'
     mov byte [gs:0xa4], 'R'
-    jump $
+    jmp $
+
+.mem_get_ok:
+    mov [total_mem_bytes], edx
 
 ; Ready for protect mode
     ; Open A20
